@@ -6,6 +6,8 @@ package main
 
 // ni coba test lagi  makin banyak
 
+// ngedit lagi buat di pull
+
 import (
 	"encoding/json"
 	"fmt"
