@@ -24,7 +24,7 @@ import (
 type Data struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
-	Result  string `json:"result"`
+	Result  string `json:"Result"`
 }
 
 func main() {
