@@ -8,6 +8,8 @@ package main
 
 // ngedit lagi buat di pull
 
+// edit lagi buat tes di vscode
+
 import (
 	"encoding/json"
 	"fmt"
