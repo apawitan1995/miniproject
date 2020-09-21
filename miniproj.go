@@ -2,6 +2,8 @@ package main
 
 //this is a test
 
+// ni coba test lagi ya
+
 import (
 	"encoding/json"
 	"fmt"
