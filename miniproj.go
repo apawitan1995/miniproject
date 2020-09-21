@@ -8,6 +8,8 @@ package main
 
 // ni coba test lagi  makin banyak
 
+// ni coba test lagi  makin banyak biar konflik
+
 // ngedit lagi buat di pull
 
 // edit lagi buat tes di vscode
@@ -24,7 +26,7 @@ import (
 type Data struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
-	Aaa     string `json:"halo"`
+	Result  string `json:"Result"`
 }
 
 func main() {
