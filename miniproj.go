@@ -10,6 +10,8 @@ package main
 
 // edit lagi buat tes di vscode
 
+// edit lagi buat di github
+
 import (
 	"encoding/json"
 	"fmt"
