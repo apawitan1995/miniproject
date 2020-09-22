@@ -1,41 +1,24 @@
 package main
 
-//this is a test
-
-// I am editing something
-
-// ni coba test lagi ya
-
-// ni coba test lagi  makin banyak
-
-// ngedit lagi buat di pull
-
-// edit lagi buat tes di vscode
-
-// edit lagi buat di github
-
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
 type Data struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Aaa     string `json:"halo"`
+	Id                float64 `json:"id"`
+	Name              string  `json:"name"`
+	Difficulty        float64 `json:"difficulty"`
+	Exchange_rate_vol float64 `json:"exchange_rate_vol"`
+	Timestamp         int     `json:"timestamp"`
 }
 
 func main() {
 
-	apietherscan := "RBFCU93DGD1CGQMK5MHD7XAWXW1RT1QNZ7"
-
-	wallet := "0x63FDB5011c66C686f88E836c38C874142014f0A2"
-
-	message := fmt.Sprintf("https://api.etherscan.io/api?module=account&action=balance&address=%v&tag=latest&apikey=%v", wallet, apietherscan)
-
-	fmt.Println(message)
+	message := "https://whattomine.com/coins/315.json"
 
 	resp, _ := http.Get(message)
 
@@ -45,8 +28,6 @@ func main() {
 	if err1 != nil {
 		fmt.Println(err1)
 	}
-
-	fmt.Println(body)
 
 	body1 := body
 
@@ -59,5 +40,12 @@ func main() {
 	}
 
 	fmt.Println(data1)
+
+	databaru := fmt.Sprintf("%v", data1)
+	http.HandleFunc("/json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "%v", databaru)
+	})
+
+	log.Fatal(http.ListenAndServe(":8081", nil))
 
 }
