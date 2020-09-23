@@ -6,6 +6,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+
+	"time"
 )
 
 type Data struct {
@@ -16,34 +21,64 @@ type Data struct {
 	Timestamp         int     `json:"timestamp"`
 }
 
+func doEvery(d time.Duration, f func() []Data) []Data {
+	data := []Data{}
+	for _ = range time.Tick(d) {
+		data = f()
+	}
+	return data
+}
+
+func printCoin() []Data {
+	d := []Data{}
+
+	messages := []string{"https://whattomine.com/coins/315.json", "https://whattomine.com/coins/334.json"}
+
+	for _, message := range messages {
+		resp, _ := http.Get(message)
+
+		defer resp.Body.Close()
+		body, err1 := ioutil.ReadAll(resp.Body)
+
+		if err1 != nil {
+			fmt.Println(err1)
+		}
+
+		body1 := body
+
+		data1 := Data{}
+
+		err2 := json.Unmarshal(body1, &data1)
+
+		if err2 != nil {
+			fmt.Println(err2)
+		}
+
+		fmt.Println(data1)
+
+		d = append(d, data1)
+	}
+
+	return d
+}
+
 func main() {
 
-	message := "https://whattomine.com/coins/315.json"
-
-	resp, _ := http.Get(message)
-
-	defer resp.Body.Close()
-	body, err1 := ioutil.ReadAll(resp.Body)
-
-	if err1 != nil {
-		fmt.Println(err1)
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
 	}
 
-	body1 := body
+	db.AutoMigrate(&Data{})
 
-	data1 := Data{}
+	datas := []Data{}
 
-	err2 := json.Unmarshal(body1, &data1)
+	datas = doEvery(1*time.Second, printCoin)
 
-	if err2 != nil {
-		fmt.Println(err2)
-	}
+	dataprint := fmt.Sprintf("%v", datas)
 
-	fmt.Println(data1)
-
-	databaru := fmt.Sprintf("%v", data1)
 	http.HandleFunc("/json", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "%v", databaru)
+		fmt.Fprintf(w, "%v", dataprint)
 	})
 
 	log.Fatal(http.ListenAndServe(":8081", nil))
