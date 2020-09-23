@@ -26,6 +26,7 @@ func doEvery(d time.Duration, f func() []Data) []Data {
 	for _ = range time.Tick(d) {
 		data = f()
 	}
+
 	return data
 }
 
@@ -73,13 +74,19 @@ func main() {
 
 	datas := []Data{}
 
-	datas = doEvery(1*time.Second, printCoin)
+	datas = printCoin()
 
 	dataprint := fmt.Sprintf("%v", datas)
 
 	http.HandleFunc("/json", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%v", dataprint)
 	})
+
+	// Migrate the schema
+	db.AutoMigrate(&Data{})
+
+	// Create
+	db.Create(&Data{Id: datas[0].Id, Name: datas[0].Name, Difficulty: datas[0].Difficulty, Exchange_rate_vol: datas[0].Exchange_rate_vol, Timestamp: datas[0].Timestamp})
 
 	log.Fatal(http.ListenAndServe(":8081", nil))
 
