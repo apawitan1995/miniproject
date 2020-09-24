@@ -12,6 +12,7 @@ ADD . /app
 ## any further commands inside our /app
 ## directory
 WORKDIR /app
+RUN apk add git
 ## Add this go mod download command to pull in any dependencies
 RUN go mod download
 ## we run go build to compile the binary

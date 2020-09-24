@@ -14,11 +14,19 @@ import (
 )
 
 type Data struct {
-	Id                float64 `json:"id"`
-	Name              string  `json:"name"`
-	Difficulty        float64 `json:"difficulty"`
-	Exchange_rate_vol float64 `json:"exchange_rate_vol"`
-	Timestamp         int     `json:"timestamp"`
+	Id              float64 `json:"id"`
+	Name            string  `json:"name"`
+	Difficulty      float64 `json:"difficulty"`
+	ExchangeRateVol float64 `json:"exchange_rate_vol"`
+	Timestamp       int     `json:"timestamp"`
+}
+
+type DataDB struct {
+	Id              float64
+	Name            string
+	Difficulty      float64
+	ExchangeRateVol float64
+	Timestamp       int
 }
 
 func doEvery(d time.Duration, f func() []Data) []Data {
@@ -70,7 +78,7 @@ func main() {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&Data{})
+	db.AutoMigrate(&DataDB{})
 
 	datas := []Data{}
 
@@ -82,12 +90,10 @@ func main() {
 		fmt.Fprintf(w, "%v", dataprint)
 	})
 
-	// Migrate the schema
-	db.AutoMigrate(&Data{})
-
 	// Create
-	db.Create(&Data{Id: datas[0].Id, Name: datas[0].Name, Difficulty: datas[0].Difficulty, Exchange_rate_vol: datas[0].Exchange_rate_vol, Timestamp: datas[0].Timestamp})
+	db.Create(&DataDB{Id: datas[0].Id, Name: datas[0].Name, Difficulty: datas[0].Difficulty, ExchangeRateVol: datas[0].ExchangeRateVol, Timestamp: datas[0].Timestamp})
 
 	log.Fatal(http.ListenAndServe(":8081", nil))
+
 
 }
