@@ -7,18 +7,20 @@ import (
 	"log"
 	"net/http"
 
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"time"
 )
 
 type Data struct {
-	Id                float64 `json:"id"`
-	Name              string  `json:"name"`
-	Difficulty        float64 `json:"difficulty"`
-	Exchange_rate_vol float64 `json:"exchange_rate_vol"`
-	Timestamp         int     `json:"timestamp"`
+	ID         int     `gorm:"primaryKey"`
+	Timestamp  int     `json:"updated"`
+	Coin       string  `json:"coin"`
+	Name       string  `json:"name"`
+	Price      float64 `json:"price"`
+	Difficulty float64 `json:"difficulty"`
+	Volume     float64 `json:"volume"`
 }
 
 func doEvery(d time.Duration, f func() []Data) []Data {
@@ -33,7 +35,7 @@ func doEvery(d time.Duration, f func() []Data) []Data {
 func printCoin() []Data {
 	d := []Data{}
 
-	messages := []string{"https://whattomine.com/coins/315.json", "https://whattomine.com/coins/334.json"}
+	messages := []string{"https://api.minerstat.com/v2/coins?list=0xBTC", "https://api.minerstat.com/v2/coins?list=BSHA3"}
 
 	for _, message := range messages {
 		resp, _ := http.Get(message)
@@ -47,17 +49,18 @@ func printCoin() []Data {
 
 		body1 := body
 
-		data1 := Data{}
+		//fmt.Println(body1)
+
+		data1 := []Data{}
 
 		err2 := json.Unmarshal(body1, &data1)
-
 		if err2 != nil {
 			fmt.Println(err2)
 		}
 
-		fmt.Println(data1)
+		fmt.Println(data1[0])
 
-		d = append(d, data1)
+		d = append(d, data1[0])
 	}
 
 	return d
@@ -65,7 +68,8 @@ func printCoin() []Data {
 
 func main() {
 
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	dsn := "host=localhost user=postgres password=monadmonad dbname=coin port=5432"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -86,7 +90,9 @@ func main() {
 	db.AutoMigrate(&Data{})
 
 	// Create
-	db.Create(&Data{Id: datas[0].Id, Name: datas[0].Name, Difficulty: datas[0].Difficulty, Exchange_rate_vol: datas[0].Exchange_rate_vol, Timestamp: datas[0].Timestamp})
+	for i, _ := range datas {
+		db.Create(&Data{ID: datas[i].ID, Timestamp: datas[i].Timestamp, Coin: datas[i].Coin, Name: datas[i].Name, Price: datas[i].Price, Difficulty: datas[i].Difficulty, Volume: datas[i].Volume})
+	}
 
 	log.Fatal(http.ListenAndServe(":8081", nil))
 
