@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 
 	"gorm.io/driver/postgres"
@@ -88,13 +90,20 @@ func filterCoin(d []Data) []Data {
 }
 
 func getDatabaseInfo() Environment {
+
+	u := os.Getenv("DATABASE_URL")
 	e := Environment{}
 
-	e.Host = os.Getenv("host")         //"localhost"
-	e.User = os.Getenv("user")         //"postgres"
-	e.Password = os.Getenv("password") //"monadmonad"
-	e.Dbname = os.Getenv("dbname")     //"coin"
-	e.Port = os.Getenv("port")         //"5432"
+	p, err := url.Parse(u)
+	if err != nil {
+		panic(err)
+	}
+	host, port, _ := net.SplitHostPort(p.Host)
+	e.Host = host                     //"localhost"
+	e.User = p.User.Username()        //"postgres"
+	e.Password, _ = p.User.Password() //"monadmonad"
+	e.Dbname = p.Path                 //"coin"
+	e.Port = port                     //"5432"
 
 	return e
 }
