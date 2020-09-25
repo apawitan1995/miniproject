@@ -4,96 +4,123 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"time"
 )
 
+//Data is the structure save the fetched data from the API and used also as a table in the data base
 type Data struct {
-	ID         int     `gorm:"primaryKey"`
-	Timestamp  int     `json:"updated"`
-	Coin       string  `json:"coin"`
-	Name       string  `json:"name"`
-	Price      float64 `json:"price"`
-	Difficulty float64 `json:"difficulty"`
-	Volume     float64 `json:"volume"`
+	IDKey      int     `gorm:"primaryKey"`
+	Timestamp  int     `json:"updated"`    //The UNIX timestamp of the last time the coin was updated
+	Coin       string  `json:"coin"`       //Coin's ticker
+	Name       string  `json:"name"`       //Coin's name
+	Algorithm  string  `json:"algorithm"`  //Coin's algorithm
+	Price      float64 `json:"price"`      //Coin's price in USD
+	Difficulty float64 `json:"difficulty"` //Coin's difficulty
+	Volume     float64 `json:"volume"`     //Coin's last 24h volume in USD
 }
 
-func doEvery(d time.Duration, f func() []Data) []Data {
+//Environment contains the information needed to connect to the database
+type Environment struct {
+	Host     string
+	User     string
+	Password string
+	Dbname   string
+	Port     string
+}
+
+func getCoin() []Data {
+
+	// write the api link to get the data, the output from minerstat is a slice
+	messages := "https://api.minerstat.com/v2/coins?list=BSHA3,TRB,0xBTC,KDA,DGB"
+
+	resp, _ := http.Get(messages)
+
+	defer resp.Body.Close()
+	body, err1 := ioutil.ReadAll(resp.Body)
+
+	if err1 != nil {
+		fmt.Println(err1)
+	}
+
+	// prepare the data
 	data := []Data{}
-	for _ = range time.Tick(d) {
-		data = f()
+
+	// unmarshall the data
+	err2 := json.Unmarshal(body, &data)
+	if err2 != nil {
+		fmt.Println(err2)
 	}
 
 	return data
 }
 
-func printCoin() []Data {
-	d := []Data{}
+// this function will append unique elements of the slice into datas
+// first loop : get 1 data to be compared
+// second loop : compare that 1 data to the others ( make sure you dont compare it with the same data), if there is no other data that is the same ( data is unique ) save the data
+// additionally, since we know DGA have many algo, just check that the non unique if they have Odocrypt and append it to datas
 
-	messages := []string{"https://api.minerstat.com/v2/coins?list=0xBTC", "https://api.minerstat.com/v2/coins?list=BSHA3"}
+func filterCoin(d []Data) []Data {
 
-	for _, message := range messages {
-		resp, _ := http.Get(message)
+	datas := []Data{}
+	flagUnique := 0
 
-		defer resp.Body.Close()
-		body, err1 := ioutil.ReadAll(resp.Body)
-
-		if err1 != nil {
-			fmt.Println(err1)
+	for i, d1 := range d {
+		flagUnique = 1
+		for j, d2 := range d {
+			if i != j {
+				if d1.Name == d2.Name {
+					flagUnique = 0
+				}
+			}
 		}
-
-		body1 := body
-
-		//fmt.Println(body1)
-
-		data1 := []Data{}
-
-		err2 := json.Unmarshal(body1, &data1)
-		if err2 != nil {
-			fmt.Println(err2)
+		if flagUnique == 1 {
+			datas = append(datas, d1)
+		} else if d1.Algorithm == "Odocrypt" {
+			datas = append(datas, d1)
 		}
-
-		fmt.Println(data1[0])
-
-		d = append(d, data1[0])
 	}
 
-	return d
+	return datas
+}
+
+func getDatabaseInfo() Environment {
+	e := Environment{}
+
+	e.Host = os.Getenv("host")         //"localhost"
+	e.User = os.Getenv("user")         //"postgres"
+	e.Password = os.Getenv("password") //"monadmonad"
+	e.Dbname = os.Getenv("dbname")     //"coin"
+	e.Port = os.Getenv("port")         //"5432"
+
+	return e
 }
 
 func main() {
 
-	dsn := "host=localhost user=postgres password=monadmonad dbname=coin port=5432"
+	// get information to be able to connect to the database
+	dbInfo := getDatabaseInfo()
+
+	// initialize the connection to the postgreSQL server
+	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v", dbInfo.Host, dbInfo.User, dbInfo.Password, dbInfo.Dbname, dbInfo.Port)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
 
+	// create the table with the same structure as Data type
 	db.AutoMigrate(&Data{})
 
-	datas := []Data{}
+	// fetch the coin data from minerstat
+	datas := getCoin()
 
-	datas = printCoin()
+	// filter the data to make sure that each data is unique
+	datas = filterCoin(datas)
 
-	dataprint := fmt.Sprintf("%v", datas)
-
-	http.HandleFunc("/json", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "%v", dataprint)
-	})
-
-	// Migrate the schema
-	db.AutoMigrate(&Data{})
-
-	// Create
-	for i, _ := range datas {
-		db.Create(&Data{ID: datas[i].ID, Timestamp: datas[i].Timestamp, Coin: datas[i].Coin, Name: datas[i].Name, Price: datas[i].Price, Difficulty: datas[i].Difficulty, Volume: datas[i].Volume})
-	}
-
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	// add the filtered data to the database
+	db.Create(&datas)
 
 }
