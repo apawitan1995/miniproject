@@ -116,8 +116,8 @@ func getDatabaseInfo() Environment {
 }
 
 func main() {
-	AWS := "***REMOVED***"
-	fmt.Println(AWS)
+	const AWS_KEY = "***REMOVED***"
+	fmt.Println(AWS_KEY)
 
 	// get information to be able to connect to the database
 	// initialize the connection to the postgreSQL server
