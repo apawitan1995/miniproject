@@ -116,6 +116,8 @@ func getDatabaseInfo() Environment {
 }
 
 func main() {
+	password := "**"
+    fmt.Println(password)
 
 	// get information to be able to connect to the database
 	// initialize the connection to the postgreSQL server
