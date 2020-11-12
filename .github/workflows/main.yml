@@ -12,6 +12,12 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: gitleaks-action
+      uses: zricethezav/gitleaks-action@master
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
@@ -32,8 +38,3 @@ jobs:
           echo Add other actions to build,
           echo test, and deploy your project.
           
-      # Runs a check for leaks
-      - name: Gitleaks
-      # You may pin to the exact commit or the version.
-      # uses: zricethezav/gitleaks-action@8b6cb34fcc59c3497958ce5a6d03675682029ef7
-      uses: zricethezav/gitleaks-action@v1.1.4
