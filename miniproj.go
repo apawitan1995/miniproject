@@ -15,8 +15,6 @@ import (
 
 //Data is the structure save the fetched data from the API and used also as a table in the data base
 type Data struct {
-<<<<<<< HEAD
-<<<<<<< HEAD
 	Id              float64 `json:"id"`
 	Name            string  `json:"name"`
 	Difficulty      float64 `json:"difficulty"`
@@ -25,7 +23,6 @@ type Data struct {
 }
 
 type DataDB struct {
-
 	IDKey      int     `gorm:"primaryKey"`
 	Timestamp  int     `json:"updated"`    //The UNIX timestamp of the last time the coin was updated
 	Coin       string  `json:"coin"`       //Coin's ticker
@@ -93,8 +90,6 @@ func filterCoin(d []Data) []Data {
 		}
 		if flagUnique == 1 {
 			datas = append(datas, d1)
-		} else if d1.Algorithm == "Odocrypt" {
-			datas = append(datas, d1)
 		}
 	}
 
@@ -123,11 +118,8 @@ func getDatabaseInfo() Environment {
 func main() {
 
 	// get information to be able to connect to the database
-	dbInfo := getDatabaseInfo()
-
 	// initialize the connection to the postgreSQL server
-	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v", dbInfo.Host, dbInfo.User, dbInfo.Password, dbInfo.Dbname, dbInfo.Port)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open("dsn"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -141,9 +133,7 @@ func main() {
 	// filter the data to make sure that each data is unique
 	datas = filterCoin(datas)
 
-
 	// add the filtered data to the database
 	db.Create(&datas)
-
 
 }
