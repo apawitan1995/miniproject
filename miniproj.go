@@ -116,7 +116,7 @@ func getDatabaseInfo() Environment {
 }
 
 func main() {
-	AWS := "amznAdsfadshfa;lkdfjauehf;aisj;"
+	AWS := "***REMOVED***"
 	fmt.Println(AWS)
 
 	// get information to be able to connect to the database
